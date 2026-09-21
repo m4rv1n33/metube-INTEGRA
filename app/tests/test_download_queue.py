@@ -8,6 +8,7 @@ import os
 import re
 import socket
 import tempfile
+import threading
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -119,6 +120,97 @@ async def test_add_single_video_goes_to_pending_when_auto_start_false(dq_env):
         )
     assert result["status"] == "ok"
     assert dq.pending.exists("https://example.com/watch?v=1")
+
+
+@pytest.mark.asyncio
+async def test_add_times_out_instead_of_hanging_on_a_stalled_extraction(dq_env):
+    """Extraction runs in a thread that cannot be interrupted, so a site that
+    never answers used to leave the add unresolved and the UI on "Adding..."
+    forever. The deadline has to turn that into an ordinary failed entry."""
+    import ytdl
+
+    notifier = AsyncMock()
+    url = "https://example.com/stalls-forever"
+    release = threading.Event()
+
+    def hang(self, url, *_args, **_kwargs):
+        # Released in the finally below so the executor thread does not outlive
+        # the test; in production socket_timeout is what frees it.
+        release.wait(30)
+        return {"_type": "video", "id": "late", "title": "Too late", "url": url,
+                "webpage_url": url}
+
+    dq = DownloadQueue(dq_env, notifier)
+    try:
+        with patch.object(ytdl, "_EXTRACT_TIMEOUT", 0.2),              patch.object(DownloadQueue, "_DownloadQueue__extract_info", hang):
+            result = await dq.add(
+                url, "video", "auto", "any", "best", "", "", 0, auto_start=True,
+            )
+    finally:
+        release.set()
+
+    assert result["status"] == "error"
+    assert "Timed out" in result["msg"]
+    # Reported like any other add failure, so it is visible after the tab moves on.
+    assert dq.done.exists(url)
+    assert dq.done.get(url).info.status == "error"
+    assert not dq.queue.exists(url)
+
+
+@pytest.mark.asyncio
+async def test_extract_params_carry_a_socket_timeout_a_preset_can_override(dq_env):
+    """Extraction runs in the main process, where the download subprocess's
+    socket_timeout does not apply, so it needs its own -- and like the download
+    path, an explicit user value still wins."""
+    import ytdl
+
+    dq_env.YTDL_OPTIONS_PRESETS = {"Patient": {"socket_timeout": 600}}
+    captured_params: list = []
+
+    class FakeYoutubeDL:
+        def __init__(self, params=None):
+            captured_params.append(params)
+
+        def extract_info(self, url, download=False):
+            return {"_type": "video", "id": "vid-timeout", "title": "Timeout Test",
+                    "url": url, "webpage_url": url}
+
+    notifier = AsyncMock()
+    dq = DownloadQueue(dq_env, notifier)
+    with patch("ytdl.yt_dlp.YoutubeDL", FakeYoutubeDL):
+        await dq.add("https://example.com/default-timeout", "video", "auto", "any",
+                     "best", "", "", 0, auto_start=False)
+        await dq.add("https://example.com/preset-timeout", "video", "auto", "any",
+                     "best", "", "", 0, auto_start=False,
+                     ytdl_options_presets=["Patient"])
+
+    assert captured_params[0]["socket_timeout"] == ytdl._EXTRACT_SOCKET_TIMEOUT
+    assert captured_params[1]["socket_timeout"] == 600
+
+
+@pytest.mark.asyncio
+async def test_cancel_during_extraction_keeps_the_video_out_of_the_queue(dq_env):
+    """Cancel cannot interrupt the extraction thread, so the add has to notice
+    the cancel once the extractor answers -- otherwise a canceled single video
+    still appears in the queue minutes later."""
+    notifier = AsyncMock()
+    url = "https://example.com/canceled-midway"
+
+    def cancel_then_extract(self, url, *_args, **_kwargs):
+        self.cancel_add()
+        return {"_type": "video", "id": "vid-cancel", "title": "Canceled",
+                "url": url, "webpage_url": url}
+
+    dq = DownloadQueue(dq_env, notifier)
+    with patch.object(DownloadQueue, "_DownloadQueue__extract_info", cancel_then_extract):
+        result = await dq.add(
+            url, "video", "auto", "any", "best", "", "", 0, auto_start=True,
+        )
+
+    assert result["status"] == "ok"
+    assert not dq.queue.exists(url)
+    assert not dq.pending.exists(url)
+    assert not dq.done.exists(url)
 
 
 @pytest.mark.asyncio

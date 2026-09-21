@@ -138,6 +138,17 @@ _LIVE_MAX_CHECK_INTERVAL = 3600
 # errors) tolerated before a scheduled live download is abandoned as errored.
 _LIVE_PROBE_MAX_FAILURES = 5
 
+# Metadata extraction runs in the main process, so the download subprocess's
+# socket_timeout does not cover it. Without one, a read that stalls never
+# returns: the add sits in the executor and the UI shows "Adding..." until the
+# user gives up. Same 30s the download uses.
+_EXTRACT_SOCKET_TIMEOUT = 30
+# Backstop for a whole extraction. socket_timeout only bounds a single read, so
+# a site that trickles bytes, or a long retry chain, can still outlast any wait
+# worth sitting through. Long enough for a paginated channel listing, short
+# enough to report an error while the user is still watching.
+_EXTRACT_TIMEOUT = 300
+
 
 class _AlbumArtistPostProcessor(PostProcessor):
     """Fill missing album-artist metadata from yt-dlp's album-level signals."""
@@ -1437,14 +1448,20 @@ class DownloadQueue:
             return
 
         try:
-            entry = await asyncio.get_running_loop().run_in_executor(
-                None,
-                partial(
-                    self.__extract_info,
-                    url,
-                    getattr(info, 'ytdl_options_presets', None),
-                    getattr(info, 'ytdl_options_overrides', {}) or {},
+            # Bounded for the same reason as the add path, and a timeout here
+            # counts as one more transient failure rather than aborting the
+            # download: the next interval retries it.
+            entry = await asyncio.wait_for(
+                asyncio.get_running_loop().run_in_executor(
+                    None,
+                    partial(
+                        self.__extract_info,
+                        url,
+                        getattr(info, 'ytdl_options_presets', None),
+                        getattr(info, 'ytdl_options_overrides', {}) or {},
+                    ),
                 ),
+                timeout=_EXTRACT_TIMEOUT,
             )
         except Exception as exc:
             # Treat all probe failures (transient network blips, rate limits,
@@ -1582,6 +1599,9 @@ class DownloadQueue:
         debug_logging = logging.getLogger().isEnabledFor(logging.DEBUG)
         user_opts = self._build_ytdl_options(ytdl_options_presets, ytdl_options_overrides)
         params = {
+            # Ahead of user_opts so an explicit socket_timeout still wins, the
+            # same precedence the download path gives it.
+            'socket_timeout': _EXTRACT_SOCKET_TIMEOUT,
             **user_opts,
             'quiet': not debug_logging,
             'verbose': debug_logging,
@@ -1698,6 +1718,7 @@ class DownloadQueue:
 
         debug_logging = logging.getLogger().isEnabledFor(logging.DEBUG)
         params = {
+            'socket_timeout': _EXTRACT_SOCKET_TIMEOUT,
             **user_opts,
             'quiet': not debug_logging,
             'verbose': debug_logging,
@@ -2032,13 +2053,26 @@ class DownloadQueue:
                 clip_start, clip_end, retry_entry,
             )
             return {'status': 'error', 'msg': url_error}
+        extraction = asyncio.get_running_loop().run_in_executor(
+            None,
+            partial(self.__extract_info, url, ytdl_options_presets, ytdl_options_overrides),
+        )
         try:
-            entry = await asyncio.get_running_loop().run_in_executor(
-                None,
-                partial(self.__extract_info, url, ytdl_options_presets, ytdl_options_overrides),
-            )
-        except yt_dlp.utils.YoutubeDLError as exc:
-            msg = str(exc)
+            entry = await asyncio.wait_for(extraction, timeout=_EXTRACT_TIMEOUT)
+        except (yt_dlp.utils.YoutubeDLError, TimeoutError) as exc:
+            # asyncio.TimeoutError *is* the builtin TimeoutError, so a socket
+            # timeout surfacing from inside yt-dlp is indistinguishable by type
+            # from our own deadline. What tells them apart is the future:
+            # wait_for cancels it when the deadline is ours.
+            if extraction.cancelled():
+                # The thread is not killable and stays on the stalled read until
+                # socket_timeout frees it. Answering now is still the right
+                # trade: the alternative is an add that never resolves.
+                msg = f'Timed out reading metadata after {_EXTRACT_TIMEOUT} seconds'
+                log.warning('Metadata extraction for "%s" timed out after %ds', url,
+                            _EXTRACT_TIMEOUT)
+            else:
+                msg = str(exc) or f'{type(exc).__name__} while reading metadata'
             await self.__record_add_failure(
                 url, msg, download_type, codec, format, quality, folder,
                 custom_name_prefix, playlist_item_limit, split_by_chapters, chapter_template,
@@ -2046,6 +2080,13 @@ class DownloadQueue:
                 clip_start, clip_end, retry_entry,
             )
             return {'status': 'error', 'msg': msg}
+        # Cancel only bumps the generation; it cannot interrupt the extraction
+        # already running in the executor. Without this check a single-video add
+        # canceled mid-extraction still lands in the queue once the extractor
+        # finally answers. The playlist loop checks the same counter per entry.
+        if _add_gen is not None and self._add_generation != _add_gen:
+            log.info('Add canceled during metadata extraction, dropping %s', url)
+            return {'status': 'ok'}
         retry_context = _compact_persisted_entry(retry_entry)
         if isinstance(entry, dict) and retry_context is not None:
             entry = {**entry, **copy.deepcopy(retry_context)}
