@@ -247,6 +247,22 @@ code,
 
 .form-select
   --bs-form-select-bg-img: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23a1a1aa' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e")
+  // The option list is drawn by the browser, not by us. Chromium picks its
+  // colours from the select's own background, and an author-set `transparent`
+  // overrides what `color-scheme: dark` would otherwise give us, so the popup
+  // came out white. An opaque --bg matches the page behind the closed control.
+  background-color: var(--bg)
+
+  &:focus
+    background-color: var(--bg)
+
+  &:disabled
+    background-color: var(--bg)
+
+  // Firefox needs the options themselves restated.
+  option
+    background-color: var(--bg)
+    color: var(--fg)
 
 // Input-group addons read as the field's label, like the gate's form labels.
 .input-group-text
