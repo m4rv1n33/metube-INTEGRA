@@ -1,5 +1,11 @@
 # MeTube
 
+> This is the INTEGRA fork. It is dark-only, has subscriptions hidden, scopes
+> the completed list to the browser session, and builds to
+> `ghcr.io/m4rv1n33/metube`. Deployment notes for it live in
+> [DEPLOY.md](DEPLOY.md), including the retention rule the download volume
+> needs. Everything below is upstream's documentation.
+
 ![Build Status](https://github.com/alexta69/metube/actions/workflows/main.yml/badge.svg)
 ![Docker Pulls](https://img.shields.io/docker/pulls/alexta69/metube.svg)
 
