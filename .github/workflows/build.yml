@@ -1,0 +1,59 @@
+# Builds the MeTube image and pushes it to GHCR, in the same shape as the
+# RailObserver build: GitHub-hosted runner, buildx, metadata-action tagging.
+# MeTube is a single image, so there is no matrix.
+name: Build
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+  # yt-dlp is installed unpinned at build time (see the Dockerfile), so a
+  # rebuild is what keeps extractors current. Weekly, Monday 04:00 UTC.
+  schedule:
+    - cron: '0 4 * * 1'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/m4rv1n33/metube
+          # The sha tag is what an environment is pinned to; latest is what the
+          # server polls for. Both move on every push to master.
+          tags: |
+            type=sha,format=long
+            type=raw,value=latest
+
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y.%m.%d')" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          # The target host is an x86_64 mini PC, so no arm64 leg: it would
+          # only be built under QEMU and roughly triple the build time.
+          platforms: linux/amd64
+          push: true
+          build-args: |
+            VERSION=${{ steps.date.outputs.date }}
+            YTDLP_REFRESH=${{ github.run_id }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

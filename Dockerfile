@@ -46,7 +46,6 @@ RUN sed -i 's/\r$//g' docker-entrypoint.sh && \
     curl -LsSf https://astral.sh/uv/install.sh | UV_INSTALL_DIR=/usr/local/bin sh && \
     UV_PROJECT_ENVIRONMENT=/usr/local uv sync --frozen --no-dev --compile-bytecode && \
     uv cache clean && \
-    rm -f /usr/local/bin/uv /usr/local/bin/uvx /usr/local/bin/uvw && \
     curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh -s -- -y && \
     apt-get purge -y --auto-remove build-essential && \
     rm -rf /var/lib/apt/lists/* && \
@@ -68,6 +67,24 @@ RUN BGUTIL_TAG="$(curl -Ls -o /dev/null -w '%{url_effective}' https://github.com
       "https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs/releases/download/${BGUTIL_TAG}/bgutil-ytdlp-pot-provider-rs.zip" && \
     unzip -q /tmp/bgutil-ytdlp-pot-provider-rs.zip -d "${PLUGIN_DIR}" && \
     rm /tmp/bgutil-ytdlp-pot-provider-rs.zip
+
+# Upstream keeps yt-dlp current by relocking uv.lock nightly; this fork does
+# not, so the lockfile's yt-dlp would go stale between rebuilds and extractors
+# would break. Install the latest release over the locked one instead, matching
+# MeTube's own always-latest stance: a briefly broken yt-dlp release fixes
+# itself on the next build.
+#
+# YTDLP_REFRESH only exists to invalidate this layer. Without it buildx replays
+# the cached layer on a scheduled rebuild and ships whatever yt-dlp was current
+# when the layer was first built. CI passes the run id, so every build resolves
+# yt-dlp anew, and the printed version is the proof in the build log. The layer
+# sits last so busting it never rebuilds the apt/ffmpeg layer.
+ARG YTDLP_REFRESH=dev
+RUN echo "yt-dlp refresh token: ${YTDLP_REFRESH}" && \
+    uv pip install --python /usr/local/bin/python3 --upgrade "yt-dlp[default,curl-cffi,deno]" && \
+    uv cache clean && \
+    rm -f /usr/local/bin/uv /usr/local/bin/uvx /usr/local/bin/uvw && \
+    yt-dlp --version
 
 COPY app ./app
 COPY --from=builder /metube/dist/metube ./ui/dist/metube
