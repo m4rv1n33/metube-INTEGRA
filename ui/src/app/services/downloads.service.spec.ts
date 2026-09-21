@@ -261,6 +261,37 @@ describe('DownloadsService', () => {
     expect(service.queue.has('u1')).toBe(true);
   });
 
+  it('socket all hides completed entries from other sessions', () => {
+    const row: Download = {
+      id: '1',
+      title: 't',
+      url: 'u1',
+      download_type: 'video',
+      quality: 'best',
+      format: 'any',
+      folder: '',
+      custom_name_prefix: '',
+      playlist_item_limit: 0,
+      status: 'finished',
+      msg: '',
+      percent: 100,
+      speed: 0,
+      eta: 0,
+      filename: 'f.mp4',
+      checked: false,
+    };
+    // The server's completed list is instance-wide; nothing of it belongs to
+    // this tab yet, so none of it shows.
+    socket.emit('all', JSON.stringify([[], [['u1', row]]]));
+    expect(service.done.has('u1')).toBe(false);
+
+    // Once this tab downloads it, the entry is its own and survives a refresh.
+    socket.emit('completed', JSON.stringify({ ...row, url: 'u2' }));
+    socket.emit('all', JSON.stringify([[], [['u1', row], ['u2', { ...row, url: 'u2' }]]]));
+    expect(service.done.has('u1')).toBe(false);
+    expect(service.done.has('u2')).toBe(true);
+  });
+
   it('socket updated preserves checked and deleting', () => {
     service.queue.set('u1', {
       id: '1',

@@ -1,8 +1,8 @@
 {
   "name": "MeTube",
   "short_name": "MeTube",
-  "theme_color": "#212529",
-  "background_color": "#fafafa",
+  "theme_color": "#09090b",
+  "background_color": "#09090b",
   "display": "standalone",
   "scope": "./",
   "start_url": "./?utm_source=homescreen",

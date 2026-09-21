@@ -1,26 +1,520 @@
-/* You can add global styles to this file, and also import other style files */
+// INTEGRA theme: the same zinc scale, Inter / IBM Plex Mono and #eb0000 accent
+// as the management panel, vert-integra and the access gate. Dark only -- this
+// instance runs behind the access gate, so there is no theme switch to honour.
+//
+// Bootstrap ships its own palette, so this file maps the theme onto Bootstrap's
+// CSS variables. Component-level variables (--bs-btn-*, --bs-form-*) are set
+// per component because Bootstrap compiles those from Sass at build time and
+// they do not follow --bs-primary and friends.
+
+html
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace
+  --accent: #eb0000
+  --ok: #16a34a
+  --warn: #d97706
+
+  --bg: #09090b
+  --bg-blur: rgb(9 9 11 / 0.85)
+  --fg: #f4f4f5
+  --muted: #a1a1aa
+  --muted-strong: #a1a1aa
+  --border: #27272a
+  --border-strong: #3f3f46
+  --hover: #18181b
+  --surface: #0c0c0e
+  --track: #27272a
+
+  color-scheme: dark
+
+  // Bootstrap surfaces and text
+  --bs-body-bg: var(--bg)
+  --bs-body-bg-rgb: 9, 9, 11
+  --bs-body-color: var(--fg)
+  --bs-body-color-rgb: 244, 244, 245
+  --bs-emphasis-color: var(--fg)
+  --bs-secondary-color: var(--muted)
+  --bs-secondary-bg: var(--surface)
+  --bs-tertiary-bg: var(--hover)
+  --bs-tertiary-color: var(--muted)
+  --bs-border-color: var(--border)
+  --bs-border-color-translucent: var(--border)
+  --bs-border-radius: 0.5rem
+  --bs-border-radius-sm: 0.375rem
+  --bs-border-radius-lg: 0.5rem
+  --bs-body-font-family: var(--font-sans)
+  --bs-font-monospace: var(--font-mono)
+  --bs-link-color: var(--fg)
+  --bs-link-color-rgb: 244, 244, 245
+  --bs-link-hover-color: var(--accent)
+  --bs-link-hover-color-rgb: 235, 0, 0
+  --bs-heading-color: var(--fg)
+  --bs-code-color: var(--muted)
+
+  // Semantic colours: one accent, plus green and amber for state
+  --bs-primary: var(--accent)
+  --bs-primary-rgb: 235, 0, 0
+  --bs-danger: var(--accent)
+  --bs-danger-rgb: 235, 0, 0
+  --bs-success: var(--ok)
+  --bs-success-rgb: 22, 163, 74
+  --bs-warning: var(--warn)
+  --bs-warning-rgb: 217, 119, 6
+  --bs-info: var(--muted)
+  --bs-info-rgb: 161, 161, 170
+  --bs-secondary: var(--muted)
+  --bs-secondary-rgb: 161, 161, 170
+
+body
+  background: var(--bg)
+  color: var(--fg)
+  font-family: var(--font-sans)
+  -webkit-font-smoothing: antialiased
+
+*::selection
+  background-color: var(--accent)
+  color: #fff
+
+code,
+.mono
+  font-family: var(--font-mono)
+
+// Typography helpers shared with the gate and the management panel
+
+.eyebrow,
+.meta
+  font-family: var(--font-mono)
+  font-size: 0.75rem
+  color: var(--muted)
+
+.eyebrow
+  letter-spacing: 0.1em
+  text-transform: uppercase
+
+.dot
+  display: inline-block
+  width: 0.625rem
+  height: 0.625rem
+  background: var(--accent)
+  flex-shrink: 0
+
+.dot-small
+  width: 0.5rem
+  height: 0.5rem
+
+// Top bar
 
 .navbar
-    background-color: var(--bs-dark) !important
+  position: sticky
+  top: 0
+  z-index: 50
+  padding: 0
+  border-bottom: 1px solid var(--border)
+  background: var(--bg-blur) !important
+  backdrop-filter: blur(12px)
 
-    [data-bs-theme="dark"] &
-        background-color: var(--bs-dark-bg-subtle) !important
+  .container-fluid
+    width: 100%
+    max-width: 100rem
+    margin: 0 auto
+    gap: 1.25rem
+    min-height: 4rem
+    padding: 0.5rem 1.25rem
+
+  .navbar-brand
+    gap: 0.5rem
+    margin: 0
+    padding: 0
+    color: var(--fg)
+    font-size: 1rem
+    font-weight: 700
+    letter-spacing: -0.025em
+
+    &:hover
+      color: var(--fg)
+
+  .brand-sub
+    font-family: var(--font-mono)
+    font-weight: 400
+    font-size: 0.875rem
+    color: var(--muted)
+
+// Buttons
+
+.btn
+  --bs-btn-border-radius: 0.375rem
+  --bs-btn-font-weight: 500
+  --bs-btn-focus-box-shadow: none
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s
+
+.btn-primary
+  --bs-btn-color: var(--bg)
+  --bs-btn-bg: var(--fg)
+  --bs-btn-border-color: var(--fg)
+  --bs-btn-hover-color: #fff
+  --bs-btn-hover-bg: var(--accent)
+  --bs-btn-hover-border-color: var(--accent)
+  --bs-btn-active-color: #fff
+  --bs-btn-active-bg: var(--accent)
+  --bs-btn-active-border-color: var(--accent)
+  --bs-btn-disabled-color: var(--bg)
+  --bs-btn-disabled-bg: var(--muted)
+  --bs-btn-disabled-border-color: var(--muted)
+
+.btn-secondary,
+.btn-outline-secondary,
+.btn-light,
+.btn-outline-light
+  --bs-btn-color: var(--fg)
+  --bs-btn-bg: transparent
+  --bs-btn-border-color: var(--border-strong)
+  --bs-btn-hover-color: var(--fg)
+  --bs-btn-hover-bg: var(--hover)
+  --bs-btn-hover-border-color: var(--border-strong)
+  --bs-btn-active-color: var(--fg)
+  --bs-btn-active-bg: var(--hover)
+  --bs-btn-active-border-color: var(--muted)
+  --bs-btn-disabled-color: var(--muted)
+  --bs-btn-disabled-bg: transparent
+  --bs-btn-disabled-border-color: var(--border)
+
+.btn-danger,
+.btn-outline-danger
+  --bs-btn-color: var(--accent)
+  --bs-btn-bg: transparent
+  --bs-btn-border-color: var(--border-strong)
+  --bs-btn-hover-color: var(--accent)
+  --bs-btn-hover-bg: transparent
+  --bs-btn-hover-border-color: var(--accent)
+  --bs-btn-active-color: var(--accent)
+  --bs-btn-active-bg: transparent
+  --bs-btn-active-border-color: var(--accent)
+  --bs-btn-disabled-color: var(--muted)
+  --bs-btn-disabled-bg: transparent
+  --bs-btn-disabled-border-color: var(--border)
+
+.btn-warning
+  --bs-btn-color: var(--fg)
+  --bs-btn-bg: transparent
+  --bs-btn-border-color: var(--warn)
+  --bs-btn-hover-color: var(--fg)
+  --bs-btn-hover-bg: var(--hover)
+  --bs-btn-hover-border-color: var(--warn)
+  --bs-btn-disabled-color: var(--muted)
+  --bs-btn-disabled-bg: transparent
+  --bs-btn-disabled-border-color: var(--border)
+
+.btn-link
+  --bs-btn-color: var(--muted-strong)
+  --bs-btn-hover-color: var(--accent)
+  --bs-btn-active-color: var(--accent)
+  --bs-btn-disabled-color: var(--muted)
+  text-decoration: none
+
+.btn-close
+  --bs-btn-close-focus-shadow: none
+  filter: invert(1) grayscale(1) brightness(1.6)
+  opacity: 0.6
+
+  &:hover
+    opacity: 1
+
+// Forms
+
+.form-control,
+.form-select
+  background-color: transparent
+  border-color: var(--border-strong)
+  color: var(--fg)
+  transition: border-color 0.15s
+
+  &:hover
+    border-color: var(--muted)
+
+  &:focus
+    background-color: transparent
+    border-color: var(--fg)
+    box-shadow: none
+    color: var(--fg)
+
+  &::placeholder
+    color: var(--muted)
+
+  &:disabled
+    background-color: transparent
+    color: var(--muted)
+    opacity: 0.65
+
+.form-select
+  --bs-form-select-bg-img: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23a1a1aa' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e")
+
+// Input-group addons read as the field's label, like the gate's form labels.
+.input-group-text
+  background-color: var(--surface)
+  border-color: var(--border-strong)
+  color: var(--muted)
+  font-family: var(--font-mono)
+  font-size: 0.6875rem
+  letter-spacing: 0.1em
+  text-transform: uppercase
+  white-space: nowrap
+
+.input-group-lg > .input-group-text
+  font-size: 0.75rem
+
+.form-check-input
+  background-color: transparent
+  border-color: var(--border-strong)
+
+  &:checked
+    background-color: var(--accent)
+    border-color: var(--accent)
+
+  &:focus
+    border-color: var(--muted)
+    box-shadow: none
+
+.form-check-label,
+.form-label
+  color: var(--fg)
+
+// Tables: bordered lists like the management panel's container list
+
+.table
+  --bs-table-bg: transparent
+  --bs-table-color: var(--fg)
+  --bs-table-border-color: var(--border)
+  --bs-table-hover-bg: var(--hover)
+  --bs-table-hover-color: var(--fg)
+  margin-bottom: 0
+  font-size: 0.875rem
+
+  > thead th
+    background: var(--surface)
+    border-top: 0
+    border-bottom: 1px solid var(--border) !important
+    padding: 0.5rem 0.875rem
+    font-family: var(--font-mono)
+    font-size: 0.6875rem
+    font-weight: 400
+    letter-spacing: 0.1em
+    text-transform: uppercase
+    color: var(--muted)
+
+  > tbody tr
+    transition: background-color 0.15s
+
+    &:hover
+      background: var(--hover)
+
+  > tbody td
+    padding: 0.625rem 0.875rem
+    border-top: 1px solid var(--border)
+    border-bottom: 0
+
+  > tbody > tr:first-child > td
+    border-top: 0
+
+.table-wrap
+  border: 1px solid var(--border)
+  border-radius: 0.5rem
+  overflow-x: auto
+
+// Badges
+
+.badge
+  border-radius: 0.25rem
+  font-family: var(--font-mono)
+  font-size: 0.6875rem
+  font-weight: 400
+  letter-spacing: 0.05em
+  text-transform: uppercase
+
+  &.bg-secondary
+    background: var(--surface) !important
+    border: 1px solid var(--border)
+    color: var(--muted) !important
+
+  &.bg-danger
+    background: var(--accent) !important
+    color: #fff !important
+
+  &.bg-warning
+    background: transparent !important
+    border: 1px solid var(--warn)
+    color: var(--warn) !important
+
+// Progress
+
+.progress,
+.progress-stacked
+  --bs-progress-bg: var(--track)
+  --bs-progress-border-radius: 0.25rem
+  --bs-progress-bar-bg: var(--ok)
+  --bs-progress-font-size: 0.6875rem
+  font-family: var(--font-mono)
+
+.progress-bar
+  background-color: var(--ok)
+
+  &.bg-danger
+    background-color: var(--accent) !important
+
+// Alerts
+
+.alert
+  --bs-alert-border-radius: 0.5rem
+  border: 1px solid var(--border)
+  background: var(--surface)
+  color: var(--fg)
+
+  &.alert-danger
+    border-color: var(--accent)
+    color: var(--fg)
+
+  &.alert-info
+    color: var(--muted)
+
+// Modal
+
+.modal-content
+  background: var(--bg)
+  border: 1px solid var(--border)
+  border-radius: 0.5rem
+
+.modal-header,
+.modal-footer
+  border-color: var(--border)
+
+.modal-title
+  font-weight: 700
+  letter-spacing: -0.025em
+
+// Toasts
+
+.toast
+  background: var(--surface)
+  border: 1px solid var(--border) !important
+  border-radius: 0.5rem
+  color: var(--fg)
+
+  &.text-bg-danger
+    border-color: var(--accent) !important
+    background: var(--surface) !important
+    color: var(--fg) !important
+
+  &.text-bg-success
+    border-color: var(--ok) !important
+    background: var(--surface) !important
+    color: var(--fg) !important
+
+  &.text-bg-primary
+    background: var(--surface) !important
+    color: var(--fg) !important
+
+// Popovers and tooltips
+
+.popover
+  --bs-popover-bg: var(--surface)
+  --bs-popover-border-color: var(--border)
+  --bs-popover-header-bg: var(--surface)
+  --bs-popover-body-color: var(--fg)
+  --bs-popover-border-radius: 0.5rem
+  --bs-popover-font-size: 0.8125rem
+
+.tooltip
+  --bs-tooltip-bg: var(--hover)
+  --bs-tooltip-color: var(--fg)
+  --bs-tooltip-border-radius: 0.375rem
+  --bs-tooltip-font-size: 0.75rem
+  --bs-tooltip-opacity: 1
+
+// Dropdowns (folder typeahead)
+
+.dropdown-menu
+  --bs-dropdown-bg: var(--bg)
+  --bs-dropdown-border-color: var(--border)
+  --bs-dropdown-border-radius: 0.5rem
+  --bs-dropdown-link-color: var(--fg)
+  --bs-dropdown-link-hover-bg: var(--hover)
+  --bs-dropdown-link-hover-color: var(--fg)
+  --bs-dropdown-link-active-bg: var(--hover)
+  --bs-dropdown-link-active-color: var(--fg)
+  --bs-dropdown-font-size: 0.875rem
+
+// ng-select ships a light theme, so every surface is restated here.
 
 .ng-select
-    flex: 1
+  flex: 1
 
-    .ng-select-container
-        min-height: 38px
+  .ng-select-container
+    min-height: 38px
+    background: transparent
+    border-color: var(--border-strong)
+    border-radius: 0.375rem
+    color: var(--fg)
 
-    .ng-value
+  &:hover .ng-select-container
+    border-color: var(--muted)
+
+  &.ng-select-focused > .ng-select-container
+    border-color: var(--fg)
+    box-shadow: none
+
+  .ng-placeholder
+    color: var(--muted) !important
+
+  .ng-value
+    white-space: nowrap
+    overflow: visible
+
+  &.ng-select-multiple .ng-select-container .ng-value-container .ng-value
+    background: var(--hover)
+    border: 1px solid var(--border)
+    border-radius: 0.25rem
+    color: var(--fg)
+    font-size: 0.8125rem
+
+    .ng-value-icon:hover
+      background: transparent
+      color: var(--accent)
+
+    .ng-value-icon.left
+      border-right-color: var(--border)
+
+  .ng-arrow-wrapper .ng-arrow,
+  .ng-clear-wrapper
+    color: var(--muted)
+
+  .ng-dropdown-panel
+    background: var(--bg)
+    border-color: var(--border)
+    border-radius: 0.5rem
+
+    .ng-dropdown-panel-items
+      max-height: 300px
+
+      .ng-option
+        background: var(--bg)
+        color: var(--fg)
         white-space: nowrap
         overflow: visible
+        text-overflow: ellipsis
 
-    .ng-dropdown-panel
-        .ng-dropdown-panel-items
-            max-height: 300px
+        &.ng-option-marked,
+        &.ng-option-selected
+          background: var(--hover) !important
+          color: var(--fg) !important
 
-            .ng-option
-                white-space: nowrap
-                overflow: visible
-                text-overflow: ellipsis
+.ng-dropdown-panel
+  background: var(--bg)
+  border-color: var(--border)
+
+  .ng-dropdown-panel-items .ng-option
+    background: var(--bg)
+    color: var(--fg)
+
+    &.ng-option-marked,
+    &.ng-option-selected
+      background: var(--hover) !important
+      color: var(--fg) !important

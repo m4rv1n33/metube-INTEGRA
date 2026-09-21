@@ -45,6 +45,14 @@ export class DownloadsService {
   configuration: Record<string, unknown> = {};
   customDirs: Record<string, string[]> = {};
 
+  // The server keeps one completed list for the whole instance, and this one is
+  // shared by everyone holding an access-gate code. Showing all of it would make
+  // every visitor's history public, so the finished list is scoped to what this
+  // browser tab downloaded: a key only becomes visible when its 'completed'
+  // event arrives here. A reload starts the list empty again; the files
+  // themselves are untouched and still on the server.
+  private sessionDoneKeys = new Set<string>();
+
   constructor() {
     this.socket.fromEvent('all')
     .pipe(takeUntilDestroyed())
@@ -54,7 +62,11 @@ export class DownloadsService {
       this.queue.clear();
       data[0].forEach(entry => this.queue.set(...entry));
       this.done.clear();
-      data[1].forEach(entry => this.done.set(...entry));
+      data[1].forEach(entry => {
+        if (this.sessionDoneKeys.has(entry[0])) {
+          this.done.set(...entry);
+        }
+      });
       this.queueChanged.next();
       this.doneChanged.next();
     });
@@ -86,6 +98,7 @@ export class DownloadsService {
     .subscribe((strdata: string) => {
       const data: Download = JSON.parse(strdata);
       this.queue.delete(data.url);
+      this.sessionDoneKeys.add(data.url);
       this.done.set(data.url, data);
       this.queueChanged.next();
       this.doneChanged.next();
@@ -101,6 +114,7 @@ export class DownloadsService {
     .pipe(takeUntilDestroyed())
     .subscribe((strdata: string) => {
       const data: string = JSON.parse(strdata);
+      this.sessionDoneKeys.delete(data);
       this.done.delete(data);
       this.doneChanged.next();
     });

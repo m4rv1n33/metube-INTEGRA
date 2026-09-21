@@ -7,7 +7,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbModule, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { faTrashAlt, faCheckCircle, faTimesCircle, faRedoAlt, faSun, faMoon, faCheck, faCircleHalfStroke, faDownload, faExternalLinkAlt, faFileImport, faFileExport, faCopy, faClock, faTachometerAlt, faSortAmountDown, faSortAmountUp, faChevronRight, faChevronDown, faUpload, faPause, faPlay, faShareNodes } from '@fortawesome/free-solid-svg-icons';
+import { faTrashAlt, faCheckCircle, faTimesCircle, faRedoAlt, faCheck, faDownload, faExternalLinkAlt, faFileImport, faFileExport, faCopy, faClock, faTachometerAlt, faSortAmountDown, faSortAmountUp, faChevronRight, faChevronDown, faUpload, faPause, faPlay, faShareNodes } from '@fortawesome/free-solid-svg-icons';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import { CookieService } from 'ngx-cookie-service';
 import { AddDownloadPayload, DownloadsService } from './services/downloads.service';
@@ -16,11 +16,9 @@ import { SubscriptionsService } from './services/subscriptions.service';
 import { ToastService } from './services/toast.service';
 import { BatchUrlsService, BatchUrlFilter } from './services/batch-urls.service';
 import { SubscriptionRow } from './interfaces/subscription';
-import { Themes } from './theme';
 import {
   Download,
   Status,
-  Theme,
   Quality,
   Option,
   AudioFormatOption,
@@ -113,8 +111,6 @@ export class App implements AfterViewInit, OnInit, OnDestroy {
   checkingSelectedSubscriptions = false;
   hasCookies = false;
   cookieUploadInProgress = false;
-  themes: Theme[] = Themes;
-  activeTheme: Theme | undefined;
   readonly folderTypeahead = viewChild<NgbTypeahead>('folderTypeahead');
   folderFocus$ = new Subject<string>();
   folderClick$ = new Subject<string>();
@@ -158,12 +154,6 @@ export class App implements AfterViewInit, OnInit, OnDestroy {
   private readonly selectionCookiePrefix = 'metube_selection_';
   private readonly settingsCookieExpiryDays = 3650;
   private lastFocusedElement: HTMLElement | null = null;
-  private colorSchemeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-  private onColorSchemeChanged = () => {
-    if (this.activeTheme && this.activeTheme.id === 'auto') {
-      this.setTheme(this.activeTheme);
-    }
-  };
 
   // Download metrics
   activeDownloads = 0;
@@ -185,10 +175,7 @@ export class App implements AfterViewInit, OnInit, OnDestroy {
   faCheckCircle = faCheckCircle;
   faTimesCircle = faTimesCircle;
   faRedoAlt = faRedoAlt;
-  faSun = faSun;
-  faMoon = faMoon;
   faCheck = faCheck;
-  faCircleHalfStroke = faCircleHalfStroke;
   faDownload = faDownload;
   faExternalLinkAlt = faExternalLinkAlt;
   faFileImport = faFileImport;
@@ -300,8 +287,6 @@ export class App implements AfterViewInit, OnInit, OnDestroy {
     if (!Number.isNaN(ci) && ci >= 1) {
       this.checkIntervalMinutes = ci;
     }
-    this.activeTheme = this.getPreferredTheme(this.cookieService);
-
     // Subscribe to download updates
     this.downloads.queueChanged.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.updateMetrics();
@@ -334,9 +319,6 @@ export class App implements AfterViewInit, OnInit, OnDestroy {
     this.getConfiguration();
     this.getYtdlOptionsUpdateTime();
     this.getYtdlOptionPresets();
-    this.setTheme(this.activeTheme!);
-
-    this.colorSchemeMediaQuery.addEventListener('change', this.onColorSchemeChanged);
   }
 
   ngAfterViewInit() {
@@ -362,7 +344,6 @@ export class App implements AfterViewInit, OnInit, OnDestroy {
     if (this.liveCountdownTimer) {
       clearInterval(this.liveCountdownTimer);
     }
-    this.colorSchemeMediaQuery.removeEventListener('change', this.onColorSchemeChanged);
   }
 
   // keyvalue comparator that preserves insertion order (Angular's keyvalue
@@ -828,28 +809,8 @@ export class App implements AfterViewInit, OnInit, OnDestroy {
     });
   }
 
-  getPreferredTheme(cookieService: CookieService) {
-    let theme = 'auto';
-    if (cookieService.check('metube_theme')) {
-      theme = cookieService.get('metube_theme');
-    }
-
-    return this.themes.find(x => x.id === theme) ?? this.themes.find(x => x.id === 'auto');
-  }
-
-  themeChanged(theme: Theme) {
-    this.cookieService.set('metube_theme', theme.id, { expires: this.settingsCookieExpiryDays });
-    this.setTheme(theme);
-  }
-
-  setTheme(theme: Theme) {
-    this.activeTheme = theme;
-    if (theme.id === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      document.documentElement.setAttribute('data-bs-theme', 'dark');
-    } else {
-      document.documentElement.setAttribute('data-bs-theme', theme.id);
-    }
-  }
+  // Theme switching is gone: index.html pins data-bs-theme to dark, because
+  // this instance is only reached through the (dark) INTEGRA access gate.
 
   formatChanged() {
     this.cookieService.set('metube_format', this.format, { expires: this.settingsCookieExpiryDays });

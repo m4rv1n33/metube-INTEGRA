@@ -1,76 +1,101 @@
+:host
+  display: flex
+  flex-direction: column
+  min-height: 100vh
+
+main
+  flex-grow: 1
+  width: 100%
+  max-width: 100rem
+  margin: 0 auto
+  padding: 1.75rem 1.25rem 2.5rem
+
+// Lets wide tables scroll inside their frame instead of widening the page.
+main > *
+  min-width: 0
+
+// The add-url panel is the page's one card. Full width, like the gate's
+// cards, so that the intro, the panel and the tables all
+// share one left margin down the page.
 .add-url-box
-    max-width: 960px
-    margin: 4rem auto
+  margin: 0 0 2.5rem
+  padding: 1.25rem
+  border: 1px solid var(--border)
+  border-radius: 0.5rem
+
+.page-intro
+  margin-bottom: 1rem
+
+  h1
+    font-size: clamp(1.5rem, 3vw, 2rem)
+    font-weight: 700
+    letter-spacing: -0.025em
+    margin: 0.5rem 0 0
+
+// Section headers: title left, chevron hard right, so every section title
+// keeps the same left margin whether or not a chevron is present.
 
 .metube-section-header
-    font-size: 1.8rem
-    font-weight: 300
-    position: relative
-    background: var(--bs-secondary-bg)
-    padding: 0.5rem 0
-    margin-top: 3.5rem
+  margin-top: 2.5rem
+  margin-bottom: 0.75rem
 
 .metube-section-toggle
-    // Positioned so it paints above the header's full-bleed :before overlay.
-    position: relative
-    display: flex
-    align-items: center
-    // Title left, chevron against the right edge, so all three section titles
-    // stay on the same left margin whether or not a chevron is present.
-    justify-content: space-between
-    gap: 0.75rem
-    width: 100%
-    padding: 0
-    border: 0
-    background: none
-    color: inherit
-    font: inherit
-    text-align: left
+  display: flex
+  align-items: center
+  justify-content: space-between
+  gap: 0.75rem
+  width: 100%
+  padding: 0
+  border: 0
+  background: none
+  color: inherit
+  text-align: left
+  font-size: clamp(1.25rem, 2.5vw, 1.5rem)
+  font-weight: 700
+  letter-spacing: -0.025em
 
 .metube-section-chevron
-    font-size: 1.1rem
-    width: 1.1rem
-    color: var(--bs-secondary-color)
+  font-size: 1rem
+  width: 1rem
+  color: var(--muted)
 
-.metube-section-header:before
-    content: ""
-    position: absolute
-    top: 0
-    bottom: 0
-    left: -9999px
-    right: 0
-    border-left: 9999px solid var(--bs-secondary-bg)
-    box-shadow: 9999px 0 0 var(--bs-secondary-bg)
+.section-actions
+  display: flex
+  flex-wrap: wrap
+  align-items: center
+  gap: 0.25rem 1.25rem
+  margin-bottom: 0.75rem
+
+  .btn-link
+    padding: 0
+    font-family: var(--font-mono)
+    font-size: 0.75rem
+    letter-spacing: 0.02em
 
 button:hover
-    text-decoration: none
+  text-decoration: none
 
 th
-    border-top: 0
-    border-bottom-width: 3px !important
-    vertical-align: middle !important
-    white-space: nowrap
+  vertical-align: middle !important
+  white-space: nowrap
 
 td
-    vertical-align: middle
+  vertical-align: middle
 
 .disabled
-    opacity: 0.5
-    pointer-events: none
+  opacity: 0.5
+  pointer-events: none
 
 .form-switch
   input
     margin-top: 5px
 
 .download-progressbar
-    width: 12rem
-    margin-left: auto
+  width: 12rem
+  margin-left: auto
 
 .modal.fade.show
-  background-color: rgba(0, 0, 0, 0.5)
-
-.modal-header
-  border-bottom: 1px solid var(--bs-border-color)
+  background-color: rgba(0, 0, 0, 0.6)
 
 .modal-body
   textarea.form-control
@@ -91,99 +116,104 @@ td
 .add-cancel-btn
   min-width: 3.25rem
 
-:host
-  display: flex
-  flex-direction: column
-  min-height: 100vh
-
-main
-  flex-grow: 1
-
-.footer
-  width: 100%
-  padding: 10px 0
-  background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.1))
-
-  .footer-content
-    display: flex
-    justify-content: center
-    align-items: center
-    gap: 20px
-    color: #fff
-    font-size: 0.9rem
-
-    .version-item
-      display: flex
-      align-items: center
-      gap: 8px
-
-      .version-label
-        font-size: 0.75rem
-        text-transform: uppercase
-        letter-spacing: 0.5px
-        opacity: 0.7
-
-      .version-value
-        font-family: monospace
-        font-size: 0.85rem
-        padding: 2px 6px
-        background: rgba(255,255,255,0.1)
-        border-radius: 4px
-
-    .version-separator
-      width: 1px
-      height: 16px
-      background: rgba(255,255,255,0.2)
-      margin: 0 4px
-
-    .github-link
-      display: flex
-      align-items: center
-      gap: 6px
-      color: #fff
-      text-decoration: none
-      font-size: 0.85rem
-      padding: 2px 8px
-      border-radius: 4px
-      transition: background-color 0.2s ease
-
-      &:hover
-        background: rgba(255,255,255,0.1)
-        color: #fff
-        text-decoration: none
-
-      i
-        font-size: 1rem
+// Top-bar live metrics, rendered as the gate's status squares.
 
 .download-metrics
   display: flex
+  flex-wrap: wrap
   align-items: center
-  gap: 16px
-  margin-left: 24px
+  gap: 0.375rem 1rem
+  margin-left: 0.5rem
+  min-width: 0
 
   .metric
     display: flex
     align-items: center
-    gap: 6px
-    font-size: 0.9rem
-    color: #adb5bd
+    gap: 0.5rem
+    font-family: var(--font-mono)
+    font-size: 0.75rem
+    color: var(--muted)
+    white-space: nowrap
 
     fa-icon
-      font-size: 1rem
+      font-size: 0.875rem
 
-    span
-      white-space: nowrap
+    &.metric-active fa-icon
+      color: var(--fg)
+
+    &.metric-queued fa-icon
+      color: var(--warn)
+
+    &.metric-done fa-icon
+      color: var(--ok)
+
+    &.metric-failed fa-icon
+      color: var(--accent)
+
+// Footer
+
+.footer
+  width: 100%
+  border-top: 1px solid var(--border)
+  background: transparent
+
+  .footer-inner
+    display: flex
+    flex-wrap: wrap
+    align-items: center
+    justify-content: space-between
+    gap: 0.75rem
+    width: 100%
+    max-width: 100rem
+    margin: 0 auto
+    padding: 1.5rem 1.25rem
+
+  .brand-small
+    display: flex
+    align-items: center
+    gap: 0.5rem
+    font-size: 0.875rem
+    font-weight: 600
+    letter-spacing: -0.025em
+
+  .footer-meta
+    display: flex
+    flex-wrap: wrap
+    align-items: center
+    gap: 0.375rem 1.25rem
+    font-family: var(--font-mono)
+    font-size: 0.75rem
+    color: var(--muted)
+
+  .version-item
+    display: flex
+    align-items: center
+    gap: 0.5rem
+
+  .version-value
+    color: var(--fg)
+
+  .github-link
+    display: flex
+    align-items: center
+    gap: 0.375rem
+    color: var(--muted)
+    text-decoration: none
+    transition: color 0.15s
+
+    &:hover
+      color: var(--accent)
 
 .cookie-btn
   flex: 1 1 auto
-  background-color: var(--bs-secondary-bg)
-  border-color: var(--bs-border-color)
-  color: var(--bs-emphasis-color)
+  background-color: transparent
+  border-color: var(--border-strong)
+  color: var(--fg)
 
   &:hover
-    background-color: var(--bs-tertiary-bg)
-    border-color: var(--bs-secondary)
-    color: var(--bs-emphasis-color)
+    background-color: var(--hover)
+    border-color: var(--border-strong)
+    color: var(--fg)
 
   &.disabled
     opacity: 0.65
@@ -191,25 +221,25 @@ main
 
 .cookie-active-btn
   flex: 1 1 auto
-  background-color: var(--bs-success-bg-subtle)
-  border-color: var(--bs-success-border-subtle)
-  color: var(--bs-success-text-emphasis)
+  background-color: transparent
+  border-color: var(--ok)
+  color: var(--fg)
 
   &:hover
-    background-color: var(--bs-success-bg-subtle)
-    border-color: var(--bs-success)
-    color: var(--bs-success-text-emphasis)
+    background-color: var(--hover)
+    border-color: var(--ok)
+    color: var(--fg)
 
   &.disabled
     opacity: 0.65
     pointer-events: none
 
 .settings-section-label
-  font-size: 0.8rem
+  font-family: var(--font-mono)
+  font-size: 0.6875rem
   text-transform: uppercase
   letter-spacing: 0.1em
-  font-weight: 600
-  color: var(--bs-body-color)
+  color: var(--muted)
   margin-top: 1.75rem
   margin-bottom: 0.75rem
 
@@ -217,10 +247,11 @@ main
     margin-top: 0
 
 .action-group-label
-  font-size: 0.7rem
+  font-family: var(--font-mono)
+  font-size: 0.6875rem
   text-transform: uppercase
-  letter-spacing: 0.05em
-  color: var(--bs-secondary-color)
+  letter-spacing: 0.1em
+  color: var(--muted)
   margin-bottom: 0.4rem
 
 .help-title
@@ -230,9 +261,26 @@ main
     outline: none
 
 .cookie-status
-  font-size: 0.8rem
+  font-family: var(--font-mono)
+  font-size: 0.6875rem
   margin-top: 0.35rem
-  color: var(--bs-secondary-color)
+  color: var(--muted)
 
   &.active
-    color: var(--bs-success-text-emphasis)
+    color: var(--ok)
+
+@media (max-width: 47.9375em)
+  main
+    padding: 1.25rem 1rem 2rem
+
+  .add-url-box
+    padding: 1rem
+
+  .footer .footer-inner
+    padding-left: 1rem
+    padding-right: 1rem
+
+@media (max-width: 30rem)
+  .download-metrics
+    gap: 0.25rem 0.75rem
+    margin-left: 0
